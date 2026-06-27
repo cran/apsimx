@@ -1,6 +1,6 @@
 ## A few steps
 require(apsimx)
-apsimx_options(warn.versions = FALSE)
+apsimx_options(warn.versions = FALSE, allow.path.spaces = TRUE)
 
 ## Only write to a temp directory
 tmp.dir <- tempdir()
@@ -13,7 +13,7 @@ if(run.factorial.example){
   ex.dir <- auto_detect_apsimx_examples()
   
   ## Copy 'Factorial' example to current directory
-  fact.ex <- paste0(ex.dir,"/Factorial.apsimx")
+  fact.ex <- paste0(ex.dir, "/Factorial.apsimx")
   file.exists(fact.ex)
   file.copy(from = fact.ex,
             to = tmp.dir, copy.mode = FALSE)

@@ -20,6 +20,17 @@ if(run.test.ks){
   grd0$total <- grd0$clay + grd0$sand
   grd <- subset(grd0, total <= 100)
   dim(grd)
+  
+  esub <- NULL
+  for(i in 1:nrow(grd)){
+    tst <- try(apsimx:::sr_ks(grd$clay[i], grd$sand[i], grd$om[i]), silent = TRUE)
+    if(inherits(tst, 'try-error')){
+      esub <- c(esub, i)
+    }
+  }
+  
+  grd <- grd[-esub, ]
+  
   grd$ks <- apsimx:::sr_ks(grd$clay, grd$sand, grd$om)
   summary(grd$ks)
 

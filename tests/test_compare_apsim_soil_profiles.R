@@ -32,23 +32,43 @@ if(run.compare.soils){
 
 ### Compare soils with different rows
 if(run.compare.soils){
-  ### SSURGO
-  sp1 <- get_ssurgo_soil_profile(lonlat = c(-93, 42), fix = TRUE)
-  class(sp1[[1]])
-  ### SoilGrids
-  sp2 <- get_isric_soil_profile(lonlat = c(-92, 42), fix = TRUE)
-  class(sp2)
-  ### WorldModeler
-  sp3 <- get_worldmodeler_soil_profile(lonlat = c(-92, 42))
-  class(sp3[[1]])
-  # Compare them
-  cmp <- compare_apsim_soil_profile(sp1[[1]], sp2, sp3[[1]], merge.wide = FALSE,
-                                    labels = c("ssurgo", "SoilGrids", "WorldModeler"))
   
-  # Plot the variables
-  plot(cmp)
-  plot(cmp, soil.var = "DUL")
-  plot(cmp, soil.var = "Carbon")
-  plot(cmp, soil.var = "LL15")
-
+  trrry <- try(sp1 <- get_isric_soil_profile(lonlat = c(-93, 42)), silent = TRUE)
+  
+  if(!inherits(trrry, 'try-error') && FALSE){
+    ### SSURGO
+    sp1 <- get_ssurgo_soil_profile(lonlat = c(-93, 42), fix = TRUE)
+    class(sp1[[1]])
+    ### SoilGrids
+    sp2 <- get_isric_soil_profile(lonlat = c(-92, 42), fix = TRUE)
+    class(sp2)
+    ### WorldModeler
+    sp3 <- get_worldmodeler_soil_profile(lonlat = c(-92, 42))
+    class(sp3[[1]])
+    # Compare them
+    cmp <- compare_apsim_soil_profile(sp1[[1]], sp2, sp3[[1]], merge.wide = FALSE,
+                                      labels = c("ssurgo", "SoilGrids", "WorldModeler"))
+    
+    # Plot the variables
+    plot(cmp)
+    plot(cmp, soil.var = "DUL")
+    plot(cmp, soil.var = "Carbon")
+    plot(cmp, soil.var = "LL15")
+  }else{
+    ### SSURGO
+    sp1 <- get_ssurgo_soil_profile(lonlat = c(-93, 42), fix = TRUE)
+    class(sp1[[1]])
+    ### WorldModeler
+    sp3 <- get_worldmodeler_soil_profile(lonlat = c(-92, 42))
+    class(sp3[[1]])
+    # Compare them
+    cmp <- compare_apsim_soil_profile(sp1[[1]], sp3[[1]], merge.wide = FALSE,
+                                      labels = c("ssurgo", "WorldModeler"))
+    
+    # Plot the variables
+    plot(cmp)
+    plot(cmp, soil.var = "DUL")
+    plot(cmp, soil.var = "Carbon")
+    plot(cmp, soil.var = "LL15")
+  }
 }

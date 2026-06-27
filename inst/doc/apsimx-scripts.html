@@ -12,7 +12,7 @@
 
 <meta name="author" content="Fernando Miguez" />
 
-<meta name="date" content="2025-03-09" />
+<meta name="date" content="2026-06-26" />
 
 <title>apsimx: writing scripts</title>
 
@@ -50,8 +50,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -62,7 +63,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -340,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">apsimx: writing scripts</h1>
 <h4 class="author">Fernando Miguez</h4>
-<h4 class="date">2025-03-09</h4>
+<h4 class="date">2026-06-26</h4>
 
 
 
@@ -371,15 +372,15 @@ provides support for APSIM ‘Classic’.</p>
 <p>Let’s see what is needed to run APSIM-X at the command line.</p>
 <div id="windows" class="section level2">
 <h2>Windows</h2>
-<p>In Windows, if you use the current (2025-03-09) version of the
+<p>In Windows, if you use the current (2026-06-26) version of the
 installer the program will be, most likely, in:</p>
 <p><strong>C:\Program
 Files\APSIM2024.2.7382.0\bin\Models.exe</strong></p>
 <p>Notice that for each new build of APSIM-X the path will change. After
 ‘APSIM’ is the year and month, and version separated by a period. In
-this case ‘2021.08.12.6707’. In the folder ‘bin’ (for ‘binary’) there
-are many libraries (‘.dll files’) and some executables. The ‘Models.exe’
-is the one that can run .apsimx files.</p>
+this case ‘2024.2.7382.0’. In the folder ‘bin’ (for ‘binary’) there are
+many libraries (‘.dll files’) and some executables. The ‘Models.exe’ is
+the one that can run .apsimx files.</p>
 <p>When trying to invoke that line at the command line, the space after
 ‘Program’ is a problem. There are some possible solutions. One is to add
 quotations (for example see ‘shQuote’ function in R). Another option is
@@ -516,7 +517,7 @@ paths</a></p>
 <p><strong>path</strong> <strong>set</strong> <strong>set path</strong>
 <strong>echo %path%</strong> <strong>echo
 %path:;=&amp;echo.%</strong></p>
-<p><a href="https://docs.telerik.com/teststudio/features/test-runners/add-path-environment-variables">Editing
+<p><a href="https://www.telerik.com/teststudio/documentation/features/test-runners/add-path-environment-variables">Editing
 PATH in Windows Example</a></p>
 <p><a href="https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/">Editing
 PATH in Windows 2</a></p>

@@ -76,7 +76,7 @@ read_apsim_soils <- function(file, src.dir = ".", verbose = TRUE){
     metadata$Comments <- xml2::xml_text(xml2::xml_find_first(soil, ".//Comments"))
     
     ## Get the soil Water
-    properties <- c("Thickness", "BD", "AirDry", "LL15", "DUL", "SAT", "BDMetadata", "AirDryMetadata", "LL15Metadata",
+    properties <- c("Thickness", "BD", "AirDry", "LL15", "DUL", "SAT", "KS", "BDMetadata", "AirDryMetadata", "LL15Metadata",
                     "DULMetadata", "SATMetadata")
     
     soil.soil.water <- vector("list", length = length(properties)) 
@@ -229,7 +229,7 @@ read_apsim_soils <- function(file, src.dir = ".", verbose = TRUE){
     }
     
     ### Section fixing FBiom
-    if(length(som.lst1$Fbiom) == 0){
+    if(length(som.lst1$FBiom) == 0){
       som.lst1$FBiom <- rep(0, length(som.lst1$Thickness))
     }
     

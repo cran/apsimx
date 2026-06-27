@@ -185,7 +185,8 @@ write_apsim_met <- function(met, wrt.dir = NULL, filename = NULL){
   writeLines(paste(attr(met,"colnames"), collapse = " "), con = con)
   writeLines(paste(attr(met,"units"), collapse = " "), con = con)
   
-  names(met) <- NULL
+  met <- as.data.frame(unclass(met))
+  attr(met, "names") <- NULL
   utils::write.table(met, file = con,
                      append = TRUE, quote = FALSE,
                      row.names = FALSE, col.names = FALSE)
@@ -237,75 +238,92 @@ impute_apsim_met <- function(met, method = c("approx","spline","mean"), verbose 
   ## Someday I will do this when it is needed
   args <- list(...)
   
+  ans <- as.data.frame(met) ### make copy of met object as a data frame
+  
   ## If there is a missing value in the first row it won't be imputed
-  if(any(is.na(met[1,]))){
-    wn1r <- which(is.na(met[1,]))
+  if(any(is.na(ans[1,]))){
+    wn1r <- which(is.na(ans[1,]))
     for(i in seq_along(wn1r)){
-      if(all(is.na(met[1:15, wn1r[i]]))){
+      if(all(is.na(ans[1:15, wn1r[i]]))){
         warning("The mean was used to impute the first row as the first 15 values were NAs")
-        met[1, wn1r[i]] <- mean(met[, wn1r[i]], na.rm = TRUE)
+        ans[1, wn1r[i]] <- mean(ans[, wn1r[i]], na.rm = TRUE)
       }else{
-        met[1, wn1r[i]] <- mean(met[1:15, wn1r[i]], na.rm = TRUE)  
+        ans[1, wn1r[i]] <- mean(ans[1:15, wn1r[i]], na.rm = TRUE)  
       }
-      cat("Imputed first row for:", names(met)[wn1r[i]], "\n")
+      cat("Imputed first row for:", names(ans)[wn1r[i]], "\n")
     }
-    print(as.data.frame(met[1,]))
+    print(as.data.frame(ans[1,]))
   }
   
   ## If there is a missing value in the last row it won't be imputed
-  if(any(is.na(met[nrow(met),]))){
-    wn1r <- which(is.na(met[nrow(met),]))
+  if(any(is.na(ans[nrow(ans),]))){
+    wn1r <- which(is.na(ans[nrow(ans),]))
     for(i in seq_along(wn1r)){
-      if(all(is.na(met[(nrow(met) - 15):nrow(met), wn1r[i]]))){
+      if(all(is.na(ans[(nrow(ans) - 15):nrow(ans), wn1r[i]]))){
         warning("The mean was used to impute the last row as the last 15 values were NAs")
-        met[nrow(met), wn1r[i]] <- mean(met[, wn1r[i]], na.rm = TRUE)
+        ans[nrow(ans), wn1r[i]] <- mean(ans[, wn1r[i]], na.rm = TRUE)
       }else{
-        met[nrow(met), wn1r[i]] <- mean(met[(nrow(met) - 15):nrow(met), wn1r[i]], na.rm = TRUE)  
+        ans[nrow(ans), wn1r[i]] <- mean(ans[(nrow(ans) - 15):nrow(ans), wn1r[i]], na.rm = TRUE)  
       }
-      cat("Imputed last row for:", names(met)[wn1r[i]], "\n")
+      cat("Imputed last row for:", names(ans)[wn1r[i]], "\n")
     }
-    print(as.data.frame(met[nrow(met),]))
+    print(as.data.frame(ans[nrow(ans),]))
   }
   
   ## Which rows have missing data
-  missing.vector <- vector(mode = "numeric", length = length(names(met)))
+  missing.vector <- vector(mode = "numeric", length = length(names(ans)))
   
-  if(all(sapply(sapply(met, function(x) which(is.na(x))),length) == 0))
+  if(all(sapply(sapply(ans, function(x) which(is.na(x))),length) == 0))
     warning("No missing data found")
   
-  missing.rows <- sapply(met, function(x) which(is.na(x)), simplify = FALSE)
+  missing.rows <- sapply(ans, function(x) which(is.na(x)), simplify = FALSE)
 
   if(verbose){
-    for(i in 1:ncol(met)){
+    for(i in 1:ncol(ans)){
       tmp.mr <- missing.rows[[i]]
       if(length(tmp.mr) > 0){
-        cat("Missing values for", names(met)[i], "\n")
-        print(as.data.frame(met)[tmp.mr,])
+        cat("Missing values for", names(ans)[i], "\n")
+        print(as.data.frame(ans)[tmp.mr,])
       }
     }
   }
   
-  col.classes <- sapply(met, class) 
+  col.classes <- sapply(ans, class) 
   ## I might need to prevent imputation on characters/factors 
   which.col.missing.values <- which(sapply(missing.rows, function(x) length(x)) > 0)
 
   for(i in which.col.missing.values){
     if(method == "approx"){
-      imputed.values <- stats::approx(x=seq_len(nrow(met)),
-                                      y=met[[i]],
-                                      xout=missing.rows[[i]])$y
+      imputed.values <- stats::approx(x = seq_len(nrow(ans)),
+                                      y = ans[[i]],
+                                      xout = missing.rows[[i]])$y
     }
     if(method == "spline"){
-      imputed.values <- stats::spline(x=seq_len(nrow(met)),
-                                      y=met[[i]],
-                                      xout=missing.rows[[i]])$y
+      imputed.values <- stats::spline(x = seq_len(nrow(ans)),
+                                      y = met[[i]],
+                                      xout = missing.rows[[i]])$y
     }
     if(method == "mean"){
-      imputed.values <- mean(met[[i]], na.rm = TRUE)
+      imputed.values <- mean(ans[[i]], na.rm = TRUE)
     }
-    met[missing.rows[[i]],i] <- imputed.values
+    
+    ans[missing.rows[[i]],i] <- imputed.values
+    
   }
-  return(met)
+  
+  ### Copy attributes to metd
+  attr(ans, "filename") <- attr(met, "filename")
+  attr(ans, "site") <- attr(met, "site")
+  attr(ans, "latitude") <- attr(met, "latitude")
+  attr(ans, "longitude") <- attr(met, "longitude")
+  attr(ans, "tav") <- attr(met, "tav")
+  attr(ans, "amp") <- attr(met, "amp")
+  attr(ans, "colnames") <- attr(met, "colnames")
+  attr(ans, "units") <- attr(met, "units")
+  attr(ans, "constants") <- attr(met, "constants")
+  attr(ans, "comments") <- attr(met, "comments")
+  class(ans) <- c("met","data.frame")
+  return(ans)
 }
 
 #' @title Check a met file for possible errors
@@ -621,8 +639,7 @@ as_apsim_met <- function(x,
   attr(x, "longitude") <- paste("longitude =", longitude)
   
   if(is.na(tav)){
-    tav <- mean(colMeans(x[,c("maxt","mint")], na.rm=TRUE), na.rm=TRUE)
-    attr(x, "tav") <- paste("tav =", tav, "(oC) ! calculated annual average ambient temperature", Sys.time())  
+    warning(" 'tav' is NA, use function tav_apsim_met to add it. ") 
   }else{
     attr(x, "tav") <- tav
   }
@@ -634,7 +651,7 @@ as_apsim_met <- function(x,
   class(x) <- c("met","data.frame")
   
   if(is.na(amp)){
-    x <- amp_apsim_met(x)
+    warning(" 'amp' is NA, use function amp_apsim_met to add it. ") 
   }else{
     attr(x, "amp") <- amp  
   }
@@ -718,9 +735,15 @@ tt_apsim_met <- function(met, dates,
                                  to = end.date, 
                                  by = "day"), index = 0)
   
-  if("Classic_TT" %in% method) met <- add_column_apsim_met(met, 0, "Classic_TT", units = "(Cd)")
-  if("HeatStress_TT" %in% method) met <- add_column_apsim_met(met, 0, "HeatStress_TT", units = "(Cd)")
-  if("CropHeatUnit_TT" %in% method) met <- add_column_apsim_met(met, 0, "CropHeatUnit_TT", units = "(Cd)")
+  if("Classic_TT" %in% method){
+    Classic_TT_vec <- numeric(nrow(met))
+  } 
+  if("HeatStress_TT" %in% method){
+    HeatStress_TT_vec <- numeric(nrow(met))
+  } 
+  if("CropHeatUnit_TT" %in% method){
+    CropHeatUnit_TT_vec <- numeric(nrow(met))
+  } 
   # if("APSIM_TT" %in% method) met$APSIM_TT <- 0
   if("APSIM_TT" %in% method) stop("Not implemented yet.", call. = FALSE)
   
@@ -754,7 +777,7 @@ tt_apsim_met <- function(met, dates,
   cum.cropheatunit.tt <- 0
   cum.apsim.tt <- 0
   k <- 0
-  
+
   for(i in 1:nrow(met)){
     
     ## In the Southern hemisphere we start at k = 1
@@ -771,13 +794,13 @@ tt_apsim_met <- function(met, dates,
         classic.tt <- (maxt.m + mint.m)/2 - base_temp
         classic.tt <- ifelse(classic.tt >= 0, classic.tt, 0)
         cum.classic.tt <- cum.classic.tt + classic.tt
-        met$Classic_TT[i] <- cum.classic.tt
+        Classic_TT_vec[i] <- cum.classic.tt
       }
       if("HeatStress_TT" %in% method){
         heatstress.tt <- met$maxt[i] - max_temp
         heatstress.tt <- ifelse(heatstress.tt >= 0, heatstress.tt, 0)
         cum.heatstress.tt <- cum.heatstress.tt + heatstress.tt
-        met$HeatStress_TT[i] <- cum.heatstress.tt
+        HeatStress_TT_vec[i] <- cum.heatstress.tt
       }
       if("CropHeatUnit_TT" %in% method){
         mint.m <- 1.8 * met$mint[i] - 4.4
@@ -785,7 +808,7 @@ tt_apsim_met <- function(met, dates,
         cropheatunit.tt <- (maxt.m + mint.m)/2 
         cropheatunit.tt <- ifelse(cropheatunit.tt >= 0, cropheatunit.tt, 0)
         cum.cropheatunit.tt <- cum.cropheatunit.tt + cropheatunit.tt
-        met$CropHeatUnit_TT[i] <- cum.cropheatunit.tt
+        CropHeatUnit_TT_vec[i] <- cum.cropheatunit.tt
       }
       if("APSIM_TT" %in% method){
         apsim.tt <- apsim_tt(met$maxt[i], met$mint[i], Tb = base_temp, To = max_temp, cardinal.temps = x_temp, gdd.coord = y_tt)
@@ -799,8 +822,22 @@ tt_apsim_met <- function(met, dates,
       cum.apsim.tt <- 0
     }
   }
-
+  
+  ### Add variables as needed
   met <- add_column_apsim_met(met, tmpd$Dates, "Dates", units = "()")
+  
+  if("Classic_TT" %in% method){
+    met <- add_column_apsim_met(met, Classic_TT_vec, "Classic_TT", units = "(Cd)")
+  }
+  
+  if("HeatStress_TT" %in% method){
+    met <- add_column_apsim_met(met, HeatStress_TT_vec, "HeatStress_TT", units = "(Cd)")
+  }
+  
+  if("CropHeatUnit_TT" %in% method){
+    met <- add_column_apsim_met(met, CropHeatUnit_TT_vec, "CropHeatUnit_TT", units = "(Cd)")
+  }
+  
   return(met)
 }
   
@@ -1027,6 +1064,7 @@ pp_apsim_met <- function(metfile, lat, sun_angle=0){
 #' which would be the average of the data. 
 #' Ideally, there are at least 20 years in the \sQuote{met} object.
 #' @param summary whether to plot \sQuote{summary} data. (default FALSE).
+#' @param by whether to perform summary by \sQuote{year} or \sQuote{month}.
 #' @export
 #' @examples 
 #' \donttest{
@@ -1051,7 +1089,8 @@ plot.met <- function(x, ..., years, met.var,
                      cumulative = FALSE,
                      facet = FALSE,
                      climatology = FALSE,
-                     summary = FALSE){
+                     summary = FALSE,
+                     by = c("year", "month")){
   
   if(!requireNamespace("ggplot2", quietly = TRUE)){
     warning("ggplot2 is required for this plotting function")
@@ -1112,6 +1151,7 @@ plot.met <- function(x, ..., years, met.var,
 
   if(!missing(years)){
     x <- x[x$year %in% years,]
+    ## Is this better? x <- subset(x, year %in% years) ## programmatically?
   }
   
   x <- add_column_apsim_met(x, value = as.factor(x$year), name = "Years", units = "()")
@@ -1325,7 +1365,10 @@ plot.met <- function(x, ..., years, met.var,
       for(i in seq_along(sort(unique(x$year)))){
         yr <- sort(unique(x$year))[i]
         x.tmp <- x[x$year == yr,]
-        if(nrow(x.tmp) < 365) next ## Skip incomplete years
+        if(nrow(x.tmp) < 365){
+          message(paste("year:", unique(x$year)[i], "was removed as it is incomplete"))
+          next ## Skip incomplete years
+        } 
         if(nrow(x.tmp) == 366) x.tmp <- x.tmp[1:365,]
         x.dag.maxt <- cumsum(x.tmp$maxt) - cumsum(maxt.climatology[1:365, "maxt"])
         x.dag.mint <- cumsum(x.tmp$mint) - cumsum(mint.climatology[1:365, "mint"])
@@ -1590,6 +1633,9 @@ plot.met <- function(x, ..., years, met.var,
 #' attr(vp, "units") <- "(hPa)"
 #' ames$vp <- vp$vp
 #' 
+#' ## or
+#' ames[["vp"]] <- vp
+#' 
 #' ## This is needed to ensure that units and related attributes are also removed
 #' ames <- remove_column_apsim_met(ames, "vp")
 #' ## However, ames$vp <- NULL will also work
@@ -1603,8 +1649,9 @@ add_column_apsim_met <- function(met, value, name, units){
   
   if(missing(name)){
     name <- names(value)
-    if(is.null(name))
-      stop("If 'name' is not provided, 'value' should be a named vector", call. = FALSE)
+    if(is.null(name) && is.null(attr(value, 'name'))){
+      stop("If 'name' is not provided, 'value' should have a 'name' attribute.", call. = FALSE)
+    }
   }
   
   if(missing(units))
@@ -1612,14 +1659,27 @@ add_column_apsim_met <- function(met, value, name, units){
   
   units <- as.character(units)
   
-  ## This invokes '$<-.data.frame' or not?
-  met[[name]] <- value
+  ## Need to use `[[<-.data.frame` to avoid issues
+  oatt <- attributes(met)
+  metd <- as.data.frame(unclass(met))
+  metd[[name]] <- value
   
-  attr(met, "colnames") <- colnames(met)
   tmp.units <- attr(met, "units")
-  if(length(tmp.units) < length(colnames(met))){
-    attr(met, "units") <- c(tmp.units, units)    
-  }
+  new.units <- c(tmp.units, units)   
+
+  attr(metd, "filename") <- oatt$filename
+  attr(metd, "site") <- oatt$site
+  attr(metd, "latitude") <- oatt$latitude
+  attr(metd, "longitude") <- oatt$longitude
+  attr(metd, "tav") <- oatt$tav
+  attr(metd, "amp") <- oatt$amp
+  attr(metd, "colnames") <- names(metd)
+  attr(metd, "units") <- new.units
+  attr(metd, "constants") <- oatt$constants
+  attr(metd, "comments") <- oatt$comments
+
+  met <- structure(metd, class = c("met", "data.frame"))
+
   return(met)
 }
 
@@ -1635,16 +1695,135 @@ add_column_apsim_met <- function(met, value, name, units){
   
   if(is.null(value) && name %in% names(x)){
     ## The thing here is that I also need to remove units and column names
-    x[[name]] <- value
-    attr(x, "colnames") <- attr(x, "colnames")[-which(names(x) == name)]
-    attr(x, "units") <- attr(x, "units")[-which(names(x) == name)]
+    wn2r <- which(names(x) == name) ## which name to remove
+    x.att <- attributes(x)
+    xd <- as.data.frame(x) ## convert to data.frame first
+    xd[[name]] <- value
+    ## copy attributes
+    attr(xd, "filename") <- x.att$filename
+    attr(xd, "site") <- x.att$site
+    attr(xd, "latitude") <- x.att$latitude
+    attr(xd, "longitude") <- x.att$longitude
+    attr(xd, "tav") <- x.att$tav
+    attr(xd, "amp") <- x.att$amp
+    attr(xd, "colnames") <- attr(x.att, "colnames")[-wn2r]
+    attr(xd, "units") <- attr(x.att, "units")[-wn2r]
+    attr(xd, "constants") <- x.att$constants
+    attr(xd, "comments") <- x.att$comments
+    x <- structure(xd, class = c("met", "data.frame"))
     return(x)
   }
   
   if(name %in% names(x)){
-    x[[name]] <- value
+    ### This means that the variable is already present and we are replacing the 
+    ### data
+    oatt <- attributes(x)
+    xd <- as.data.frame(unclass(x))
+    xd[[name]] <- value
+    
+    attr(xd, "filename") <- oatt$filename
+    attr(xd, "site") <- oatt$site
+    attr(xd, "latitude") <- oatt$latitude
+    attr(xd, "longitude") <- oatt$longitude
+    attr(xd, "tav") <- oatt$tav
+    attr(xd, "amp") <- oatt$amp
+    attr(xd, "colnames") <- names(x)
+    attr(xd, "units") <- oatt$units
+    attr(xd, "constants") <- oatt$constants
+    attr(xd, "comments") <- oatt$comments
+    
+    x <- structure(xd, class = c("met", "data.frame"))
     return(x)
+  }else{
+    ### 'value' should have the units attribute regardless
+    if(is.null(attr(value, "units"))){
+      stop("It is recommended to use function add_column_apsim_met for this operation instead.
+         Partly because units are needed", call. = FALSE)    
+    }
+    
+  
+    ### If 'value' is a data.frame
+    if(inherits(value, 'data.frame')){
+      if(dim(value)[2] > 1)
+        stop("'value' as data.frame should have just one column.", call. = FALSE)
+      nm <- names(value)
+      x <- add_column_apsim_met(x, value = value[[1]], name = nm, units = attr(x, 'units'))
+      return(x)
+    }else{
+      ### If 'value' is a list
+      if(inherits(value, 'list')){
+        if(length(value) > 1)
+          stop("'value' as a 'list' should have just one element.", call. = FALSE)
+        nm <- names(value)
+        if(is.null(nm))
+          stop("'value' as a 'list' should be named.", call. = FALSE)
+        x <- add_column_apsim_met(x, value = value[[1]], name = nm, units = attr(x, 'units'))
+        return(x)
+      }else{
+        ### If 'value' is atomic for ('logical', 'integer', 'numeric', 'complex', 'character' and 'raw') vector 
+        if(is.atomic(value)){
+          if(length(value) != nrow(x))
+            stop("'value' should be of length equal to number of rows in 'met' file.", call. = FALSE)
+          if(is.null(attr(x, 'name')))
+            stop("'value' should have an 'name' attribute.", call. = FALSE)
+          nm <- attr(value, 'name')
+          x <- add_column_apsim_met(x, value = value, name = nm, units = attr(x, 'units'))
+          return(x)
+        }else{
+          if(!inherits(value, 'data.frame') || !inherits(value, 'list') || !is.atomic(value))
+            stop("'value' should either be a 'data.frame' or a vector of length equal to the number of rows in the 'met' file", call. = FALSE)
+        }
+      }
+    }
   }
+}
+
+#' @rdname add_column_apsim_met
+#' @param x object of class \sQuote{met}
+#' @param i indices specifying elements to extract or replace. 
+#' @param j indices specifying elements to extract or replace. 
+#' @param value value for the data.frame. It could be an integer, double or vector of length equal to the number of rows in x.
+#' @export
+`[<-.met` <- function(x, i, j, value){
+  
+  if(is.null(attr(value, "units"))){
+    stop("It is recommended to use function add_column_apsim_met for this operation instead.
+         Partly because units are needed", call. = FALSE)    
+  }
+  
+  oatt <- attributes(x)
+  xd <- as.data.frame(unclass(x))
+  ### If 'value' is missing this is about extracting data
+   if(missing(value)){
+     xd <- xd[i, j]
+   }else{
+     ### If value is not missing, then we are replacing data
+     xd[i, j] <- value
+   }
+  
+  attr(xd, "filename") <- oatt$filename
+  attr(xd, "site") <- oatt$site
+  attr(xd, "latitude") <- oatt$latitude
+  attr(xd, "longitude") <- oatt$longitude
+  attr(xd, "tav") <- oatt$tav
+  attr(xd, "amp") <- oatt$amp
+  attr(xd, "colnames") <- names(x)
+  attr(xd, "units") <- oatt$units
+  attr(xd, "constants") <- oatt$constants
+  attr(xd, "comments") <- oatt$comments
+  
+  x <- structure(xd, class = c("met", "data.frame"))
+  
+  return(x)
+}
+
+#' @rdname add_column_apsim_met
+#' @param x object of class \sQuote{met}
+#' @param i indices specifying elements to extract or replace. 
+#' @param j indices specifying elements to extract or replace. 
+#' @param value value for the data.frame. It could be an integer, double or vector of length equal to the number of rows in x.
+#' @export
+`[[<-.met` <- function(x, i, j, value){
   
   if(is.null(attr(value, "units"))){
     stop("It is recommended to use function add_column_apsim_met for this operation instead.
@@ -1680,10 +1859,26 @@ remove_column_apsim_met <- function(met, name){
     stop("'name' to be removed is not in 'met' object", call. = FALSE)
   }
     
+  ### This logic works well because it is in the right order?
+  new.units <- attr(met, "units")[-which(names(met) == name)]  
   
-  attr(met, "units") <- attr(met, "units")[-which(names(met) == name)]   
-  met[[name]] <- NULL
-  attr(met, "colnames") <- names(met)
+  oatt <- attributes(met)
+  metd <- as.data.frame(unclass(met))
+  metd[[name]] <- NULL
+  
+  attr(metd, "filename") <- oatt$filename
+  attr(metd, "site") <- oatt$site
+  attr(metd, "latitude") <- oatt$latitude
+  attr(metd, "longitude") <- oatt$longitude
+  attr(metd, "tav") <- oatt$tav
+  attr(metd, "amp") <- oatt$amp
+  attr(metd, "colnames") <- names(metd)
+  attr(metd, "units") <- new.units
+  attr(metd, "constants") <- oatt$constants
+  attr(metd, "comments") <- oatt$comments
+  
+  met <- structure(metd, class = c("met", "data.frame"))
+  
   return(met)
 }
 
@@ -1788,4 +1983,39 @@ tav_apsim_met <- function(met, by.year = TRUE, na.rm = TRUE){
   attr(met, "tav") <- paste("tav =", ans, "! calculated average annual temperature", Sys.time())
   
   return(met)
+}
+
+#' @title Extract or Replace Part of a \sQuote{met} object
+#' @param x object of class \sQuote{met}
+#' @param i index for rows
+#' @param j index for columns
+#' @param ... additional arguments
+#' @param drop result is coerced to lowest possible dimension if TRUE.
+#' @export
+`[.met` <- function(x, i, j, ..., drop = TRUE){
+  
+ orig.met.attr <- attributes(x)
+ 
+ ans <- as.data.frame(unclass(x))[i, j, drop = drop]
+ 
+ attr(ans, "filename") <- orig.met.attr$filename
+ attr(ans, "site") <- orig.met.attr$site
+ attr(ans, "latitude") <- orig.met.attr$latitude
+ attr(ans, "longitude") <- orig.met.attr$longitude
+ attr(ans, "tav") <- orig.met.attr$tav
+ attr(ans, "amp") <- orig.met.attr$amp
+ attr(ans, 'colnames') <- names(ans)
+
+ if(!missing(j)){
+   attr(ans, "units") <- orig.met.attr$units[j]
+ }else{
+   attr(ans, "units") <- orig.met.attr$units
+ }
+ 
+ attr(ans, "constants") <- orig.met.attr$constants
+ attr(ans, "comments") <- orig.met.attr$comments
+
+ ans <- structure(ans, class = c("met", "data.frame"))
+ return(ans)
+  
 }

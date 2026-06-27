@@ -1,5 +1,32 @@
 **NEWS**
 
+## apsimx 2.8.2XX
+
+- changes to add_column_apsim_met, which now do not allow to simply add
+a column to a 'met' data frame without providing units
+
+- Function compare_apsim_met provides better messages when there are differences
+between the met objects. It can now handle met files with different columns.
+
+- Added functions to provide better support for objects of class 'met'. 
+The main improvement now is that attributes are copied over after operations.
+
+- Adding new functionality for calculating and plotting carbon stocks
+
+## apsimx 2.8.235 - 2025-3-10
+
+- New function get_slga_soil and get_slga_soil_profile to obtain data for Australian soils
+
+- New (unexported) function to obtain crop soil coefficients (crop_soil_coefs)
+
+- Bug fixes and improvements to 'optim_apsimx' and 'sens_apsimx'
+
+- Improved support for more complex simulations for inspecting and editing
+
+- function compare_soil_profiles works better and can handle soils with different depths. This is
+accomplished using merge.wide = FALSE
+
+
 ## apsimx 2.8.0 - 2024-08-19
 
 - Many changes to inspect, extract and edit to better support 'InitialWater' and 'Solutes'. There is significant testing, but more is needed.

@@ -1,7 +1,7 @@
 ## Testing the edit function with a variety of files
 require(apsimx)
 packageVersion("apsimx")
-apsimx_options(warn.versions = FALSE)
+apsimx_options(warn.versions = FALSE, allow.path.spaces = TRUE)
 
 extd.dir <- system.file("extdata", package = "apsimx")
 
@@ -265,7 +265,9 @@ if(run.apsimx.edit){
   
   ex.to.test <- dir(ex.dir, pattern = "apsimx$")
   
-  ex2test <- ex.to.test[c(2, 16, 18, 30)]
+  ### 
+  ### ex2test <- ex.to.test[c(17, 18, 19, 25, 31, 32)]
+  ex2test <- c("Maize.apsimx", "Mungbean.apsimx", "Oats.apsimx", "RedClover.apsimx", "Sorghum.apsimx", "Soybean.apsimx") 
   
   for(i in ex2test){
     
@@ -308,7 +310,7 @@ if(run.apsimx.edit){
   
   ex.to.test <- dir(ex.dir, pattern = "apsimx$")
   
-  ex2test <- ex.to.test[c(2, 16, 18, 30, 34)]
+  ex2test <- c("Maize.apsimx", "Mungbean.apsimx", "Oats.apsimx", "RedClover.apsimx", "Sorghum.apsimx", "Soybean.apsimx") 
   
   for(i in ex2test){
     
@@ -322,4 +324,90 @@ if(run.apsimx.edit){
                 value = "temp.met",
                 edit.tag = "-tempmet")
   }
+}
+
+#### Testing editing vectors -----
+if(run.apsimx.edit){
+  
+  dir(extd.dir, pattern = "apsimx$")
+  
+  setwd(tmp.dir)
+  
+  file.copy(file.path(extd.dir, "Wheat-opt-ex.apsimx"), tmp.dir)
+  
+  inspect_apsimx_replacement("Wheat-opt-ex.apsimx",
+                             node = "Wheat",
+                             node.child = "Phenology",
+                             node.subchild = "ThermalTime",
+                             node.subsubchild = "Response",
+                             parm = "X",
+                             display.available = FALSE)
+  
+  pp1 <- inspect_apsimx_replacement("Wheat-opt-ex.apsimx",
+                                    node = "Wheat",
+                                    node.child = "Phenology",
+                                    node.subchild = "ThermalTime",
+                                    node.subsubchild = "Response",
+                                    parm = "X",
+                                    print.path = TRUE,
+                                    display.available = FALSE)
+
+  edit_apsimx("Wheat-opt-ex.apsimx",
+              node = "Other",
+              parm.path = pp1,
+              value = "0 25 37")  
+  
+  inspect_apsimx_replacement("Wheat-opt-ex-edited.apsimx",
+                             node = "Wheat",
+                             node.child = "Phenology",
+                             node.subchild = "ThermalTime",
+                             node.subsubchild = "Response",
+                             parm = "X",
+                             display.available = FALSE)
+  
+  extract_values_apsimx("Wheat-opt-ex-edited.apsimx", src.dir = ".", parm = pp1)
+  
+  ## extract_data_apsimx("Wheat-opt-ex-edited.apsimx", node = "Other", parm = pp1)
+  
+  tmps <- expand.grid(tmp1 = 18:30, tmp2 = 33:45)
+  card.temp.vector <- paste0("0 ", tmps$tmp1, " ", tmps$tmp2)
+  grd <- data.frame(X = card.temp.vector)
+    
+  # sns <- sens_apsimx("Wheat-opt-ex-edited.apsimx",
+  #                    parm.paths = )
+  
+  
+}
+
+#### Testing 'duplication' of APSIM nodes ----
+if(run.apsimx.edit){
+  
+  dir(extd.dir, pattern = "apsimx$")
+  
+  setwd(tmp.dir)
+  
+  file.copy(file.path(extd.dir, "Wheat.apsimx"), tmp.dir)
+  
+  inspect_apsimx("Wheat.apsimx",
+                  node = "Soil",
+                  soil.child = "Physical")
+  
+  pp <- inspect_apsimx("Wheat.apsimx",
+                       node = "Soil",
+                       soil.child = "Physical",
+                       parm = "Wheat LL",
+                       print.path = TRUE)
+  
+  edit_apsimx("Wheat.apsimx",
+              node = "Soil",
+              soil.child = "Physical",
+              parm = "Wheat LL",
+              value = rep(0.25, 7))
+  
+  inspect_apsimx("Wheat-edited.apsimx",
+                  node = "Soil",
+                  soil.child = "Physical",
+                  parm = "Wheat LL")
+  
+  
 }

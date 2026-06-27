@@ -4,10 +4,16 @@
 \alias{apsim_version}
 \title{Display available APSIM \sQuote{Classic} and APSIM-X versions}
 \usage{
-apsim_version(which = c("all", "inuse"), verbose = TRUE)
+apsim_version(
+  which = c("all", "inuse"),
+  version = c("number", "full"),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{which}{either \sQuote{all} or \sQuote{inuse}}
+
+\item{version}{either \sQuote{number} for a compact display or \sQuote{full}}
 
 \item{verbose}{whether to print the information to standard output}
 }
@@ -19,8 +25,12 @@ Display available APSIM \sQuote{Classic} and APSIM-X versions
 }
 \examples{
 \dontrun{
-## Check which apsim version are avialable
+## Check which APSIM versions are available
 ava <- apsim_version(verbose = TRUE)
+
+## How to get APSIM 'help'
+## apc <- apsimx:::auto_detect_apsimx()
+## system(paste(apc, "--help"))
 }
 
 }
